@@ -8,15 +8,17 @@ from typing import List, Dict
 
 class Converter:
 
-    transnetyx_config_filename = "transnetyx_config.toml"
+    transnetyx_config_filename = "transnetyx_config.json"
     pyrat_config_filename = "pyrat_config.toml"
 
-    def __init__(self, file_name: str, *, root_folder=Path.home()):
+    file_export_prefix = "PYRAT_EXPORT"
+
+    def __init__(self, file_name: str, *, root_folder=Path.home() / "Downloads"):
 
         now = datetime.now().strftime(r"%Y_%m_%dT%H-%M-%S")
 
         self.input_fullpath = Path(root_folder) / file_name
-        self.output_fullpath = f"PYRAT_EXPORT_{file_name.split(".")[0]}_{now}.csv"
+        self.output_fullpath = Path(root_folder) / f"{self.file_export_prefix}_{file_name.split(".")[0]}_{now}.csv"
 
         self.load_config()
 
@@ -25,23 +27,34 @@ class Converter:
         self.pyrat_config = self.get_pyrat_config()
 
     def get_transnetyx_config(self):
-        file_path = Path(self.transnetyx_config_filename).resolve()
+        file_path = self.resolve_path(self.transnetyx_config_filename)
         with open(file_path, "r") as file:
             return json.load(file)
 
     def get_pyrat_config(self):
-        file_path = Path(self.pyrat_config_filename).resolve()
+        file_path = self.resolve_path(self.pyrat_config_filename)
         with open(file_path, "r") as file:
             return toml.load(file)
+
+    def resolve_path(self, path):
+        base_folder = Path(__file__).parent
+        path = Path(path)
+        if path.is_absolute():
+            return path
+        else:
+            return base_folder.joinpath(path).resolve()
 
     def get_transnetyx_data(self):
         return pd.read_csv(self.input_fullpath)
 
+    def get_pyrat_data(self, transnetyx_data):
+        return pd.DataFrame(transnetyx_data.apply(self.get_mutations, axis="columns").tolist())  # .replace(pd.NA, "")
+
     def write_pyrat_data(self, pyrat_data: pd.DataFrame):
         pyrat_data.to_csv(self.output_fullpath, sep="\t", index_label=False, index=False, quoting=QUOTE_ALL, na_rep="")
 
-    def convert(self, transnetyx_data):
-        return pd.DataFrame(transnetyx_data.apply(self.get_mutations, axis="columns").tolist())  # .replace(pd.NA, "")
+    def convert(self):
+        self.write_pyrat_data(self.get_pyrat_data(self.get_transnetyx_data()))
 
     def get_mutations(self, animal_data):
 
