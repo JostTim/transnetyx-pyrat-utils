@@ -12,7 +12,8 @@
                     "wt"
                 ],
                 "mut_marker": "Tg",
-                "wt_marker": "+"
+                "wt_marker": "+",
+                "leading_marker": "mut"
             },
             {
                 "name": "Tg(tetO-GCaMP6s)2Niell",
@@ -27,7 +28,8 @@
                     }
                 ],
                 "mut_marker": "Tg",
-                "wt_marker": "+"
+                "wt_marker": "+",
+                "leading_marker": "mut"
             }
         ]
     },
@@ -46,8 +48,9 @@
                         "if_positive": "mut"
                     }
                 ],
-                "mut_marker": "Tg",
-                "wt_marker": "+"
+                "mut_marker": "KI",
+                "wt_marker": "+",
+                "leading_marker": "wt"
             }
         ]
     }

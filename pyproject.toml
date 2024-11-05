@@ -2,21 +2,22 @@
 name = "transnetyx-pyrat-utils"
 version = "0.1.0"
 description = "Loading transnetyx csv files and outputing pyrat genotyping compatible ones"
-authors = [
-    {name = "Timothe Jost", email = "timothe.jost@wanadoo.fr"},
-]
+authors = [{ name = "Timothe Jost", email = "timothe.jost@wanadoo.fr" }]
 dependencies = [
     "pandas>=2.2.3",
     "toml>=0.10.2",
+    "rich-argparse>=1.6.0",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
-
 [tool.pdm]
 distribution = true
+
+[tool.pdm.scripts]
+transpyrat = { call = "transnetyx_pyrat_utils:run" }

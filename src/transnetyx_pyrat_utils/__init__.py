@@ -1,7 +1,10 @@
 from pathlib import Path
 from datetime import datetime
+from argparse import ArgumentParser
 import json, toml, pandas as pd
 from csv import QUOTE_ALL
+from rich.console import Console
+from rich_argparse import RichHelpFormatter
 
 from typing import List, Dict
 
@@ -19,8 +22,6 @@ class Converter:
 
         self.input_fullpath = Path(root_folder) / file_name
         self.output_fullpath = Path(root_folder) / f"{self.file_export_prefix}_{file_name.split(".")[0]}_{now}.csv"
-
-        self.load_config()
 
     def load_config(self):
         self.transnetyx_config = self.get_transnetyx_config()
@@ -54,6 +55,7 @@ class Converter:
         pyrat_data.to_csv(self.output_fullpath, sep="\t", index_label=False, index=False, quoting=QUOTE_ALL, na_rep="")
 
     def convert(self):
+        self.load_config()
         self.write_pyrat_data(self.get_pyrat_data(self.get_transnetyx_data()))
 
     def get_mutations(self, animal_data):
@@ -70,15 +72,36 @@ class Converter:
         mutations_columns = {}
         for index, mutation_map in enumerate(mutations):
             mutations_columns[f"mutation {index + 1}"] = mutation_map["name"]
-            mutations_columns[f"genotype {index + 1}"] = get_genotype(mutation_map, animal_data)
+            mutations_columns[f"genotype {index + 1}"] = self.get_genotype(mutation_map, animal_data)
 
         return dict(id=id, line=pyrat_strain, **mutations_columns)
+
+    def get_genotype_string(self, allele_list: List["AlleleValue"], reverse=True):
+        return "/".join([g.to_marker() for g in sorted(allele_list, key=lambda v: bool(v), reverse=reverse)])
+
+    def get_genotype(self, mutation_map: Dict, animal_data: pd.Series):
+
+        allele_list = []
+        for allele in mutation_map["alleles"]:
+            if isinstance(allele, str):
+                allele_list.append(AlleleValue(allele, **mutation_map))
+            else:
+                presence = animal_data[allele["name"]]
+                allele_blueprint = AlleleValue(allele["if_positive"], **mutation_map)
+                real_allele = allele_blueprint.check_presence(presence)
+                allele_list.append(real_allele)
+
+        return self.get_genotype_string(allele_list, reverse=AlleleValue.is_mutant(mutation_map["leading_marker"]))
 
 
 class AlleleValue:
 
     mutant_tag = "mut"
     wild_type_tag = "wt"
+
+    @staticmethod
+    def is_mutant(value):
+        return True if value == AlleleValue.mutant_tag else False
 
     def __init__(self, value, *, mut_marker, wt_marker, **_):
         self.value = value
@@ -90,7 +113,7 @@ class AlleleValue:
         return {"mut_marker": self.mut_marker, "wt_marker": self.wt_marker}
 
     def __neg__(self):
-        return AlleleValue(self.mutant_tag if self.value == self.wild_type_tag else self.wild_type_tag, **self.kwargify)
+        return AlleleValue(self.wild_type_tag if self.is_mutant(self.value) else self.mutant_tag, **self.kwargify)
 
     def __str__(self):
         return self.value
@@ -104,26 +127,34 @@ class AlleleValue:
         return -self
 
     def to_marker(self):
-        return self.mut_marker if self.value == self.mutant_tag else self.wt_marker
+        return self.mut_marker if self.is_mutant(self.value) else self.wt_marker
 
     def __bool__(self):
-        return True if self.value == self.mutant_tag else False
+        return self.is_mutant(self.value)
 
 
-def get_genotype_string(allele_list: List[AlleleValue]):
-    return "/".join([g.to_marker() for g in sorted(allele_list, key=lambda v: bool(v), reverse=True)])
+def run():
 
+    console = Console()
+    parser = ArgumentParser(formatter_class=RichHelpFormatter)
+    parser.add_argument(
+        "file",
+        nargs="?",
+        help="The file name or path leading to the file to be converted. By default, the file name is searched for in "
+        "the Downloads folder of the current user's home.",
+    )
+    parser.add_argument(
+        "-f",
+        "--file",
+        dest="file",
+        help="The file name or path leading to the file to be converted. By default, the file name is searched for in "
+        "the Downloads folder of the current user's home.",
+    )
+    args = parser.parse_args()
 
-def get_genotype(mutation_map: Dict, animal_data: pd.Series):
+    if not args.file:
+        parser.error("You must supply a filename either as first argument or with the -f or --file flag.")
 
-    allele_list = []
-    for allele in mutation_map["alleles"]:
-        if isinstance(allele, str):
-            allele_list.append(AlleleValue(allele, **mutation_map))
-        else:
-            presence = animal_data[allele["name"]]
-            allele_blueprint = AlleleValue(allele["if_positive"], **mutation_map)
-            real_allele = allele_blueprint.check_presence(presence)
-            allele_list.append(real_allele)
+    Converter(args.file).convert()
 
-    return get_genotype_string(allele_list)
+    console.print("🐭 Convertion done ! ✅", style="bright_green bold")
