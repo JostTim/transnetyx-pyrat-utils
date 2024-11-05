@@ -1,0 +1,54 @@
+{
+    "GCaMP6s-tet-O / CamK-tTA  - Minimal": {
+        "pyrat_name": "GCaMP6-1 Tg-CamktTA",
+        "mutations": [
+            {
+                "name": "Tg(Camk2a-tTA)1Mmay",
+                "alleles": [
+                    {
+                        "name": "tTA",
+                        "if_positive": "mut"
+                    },
+                    "wt"
+                ],
+                "mut_marker": "Tg",
+                "wt_marker": "+"
+            },
+            {
+                "name": "Tg(tetO-GCaMP6s)2Niell",
+                "alleles": [
+                    {
+                        "name": "Ch13-3 WT",
+                        "if_positive": "wt"
+                    },
+                    {
+                        "name": "GCaMP6-1 Tg",
+                        "if_positive": "mut"
+                    }
+                ],
+                "mut_marker": "Tg",
+                "wt_marker": "+"
+            }
+        ]
+    },
+    "Vgat-ires-cre (Slc32a1)": {
+        "pyrat_name": "Vgat-ires-Cre",
+        "mutations": [
+            {
+                "name": "Slc32a1tm2(cre)Lowl",
+                "alleles": [
+                    {
+                        "name": "Slc32a1-1 WT",
+                        "if_positive": "wt"
+                    },
+                    {
+                        "name": "Slc32a1-1 KO",
+                        "if_positive": "mut"
+                    }
+                ],
+                "mut_marker": "Tg",
+                "wt_marker": "+"
+            }
+        ]
+    }
+}

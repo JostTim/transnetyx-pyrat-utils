@@ -1,0 +1,3 @@
+[animals]
+id_prefix = "FOHA-"
+id_zfill = 5
