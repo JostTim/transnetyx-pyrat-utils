@@ -157,4 +157,4 @@ def run():
 
     Converter(args.file).convert()
 
-    console.print("🐭 Convertion done ! ✅", style="bright_green bold")
+    console.print("✔ Convertion done ! 🐭", style="bright_green bold")
